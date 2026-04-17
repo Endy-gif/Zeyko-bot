@@ -33,7 +33,7 @@ let handler = async (m, { conn, usedPrefix }) => {
   🚧 *Mancano:* \`${formatNumber(Math.max(0, nextRank.required - user.euro))} €\`
 
   *–––––––––––––––––––––––––*
-  _Usa ${usedPrefix}shop per spendere_`.trim();
+  _Usa ${usedPrefix}caaino per spendere_`.trim();
 
     await m.reply(messaggio, null, { mentions: [who] });
 };
