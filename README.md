@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=35&center=true&vCenter=true&width=500&lines=🩸+BLD-BLOOD-BOT+🩸;DEVELOPED+BY+BLOOD;STAFF:+BLOOD" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=45&pause=1000&color=FF0000&center=true&vCenter=true&width=600&height=100&lines=🩸+BLD-BLOOD-BOT+🩸;IL+RE+DEI+BOT+WHATSAPP;BY+BLOOD+DEVELOPER" alt="Typing SVG" />
 </p>
 
 <p align="center">
@@ -7,25 +7,31 @@
 </p>
 
 <p align="center">
-  <a href="https://wa.me/393701330693"><img src="https://img.shields.io/badge/WHATSAPP-CONTATTO-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" /></a>
-  <img src="https://img.shields.io/badge/STAFF-BLOOD-ff0000?style=for-the-badge&logo=opsgenie&logoColor=white" />
-  <img src="https://img.shields.io/badge/PLATFORM-LINUX%20%7C%20ANDROID-orange?style=for-the-badge&logo=android&logoColor=white" />
+  <a href="https://whatsapp.com/channel/0029VbCIFecBadmZCxG8ug0W">
+    <img src="https://img.shields.io/badge/UNISCITI_AL_CANALE-CANALE_UFFICIALE-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" />
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=20&pause=500&color=00FF00&center=true&vCenter=true&width=400&height=50&lines=STATUS:+ONLINE+✅;VERSION:+1.0.0+🚀;SPEED:+ULTRA+FAST+⚡" alt="Status SVG" />
 </p>
 
 ---
 
 ## 📝 DESCRIZIONE DETTAGLIATA
-**BLD-BLOOD-BOT** è un bot WhatsApp all'avanguardia, progettato per offrire un'esperienza utente fluida, veloce e ricca di funzionalità. La sua intelligenza artificiale avanzata gli permette di comprendere il contesto, non solo i comandi, rendendo l'interazione fluida e naturale.
+**BLD-BLOOD-BOT** non è solo un bot, è un ecosistema completo per WhatsApp. Progettato con un'architettura modulare e un core ultra-leggero, offre una stabilità senza precedenti. La sua intelligenza artificiale avanzata gli permette di comprendere il contesto, rendendo l'interazione fluida e naturale. 
+
+> [!NOTE]
+> Il bot è costantemente aggiornato per evitare ban e migliorare le funzioni.
 
 ---
 
 ## ⚡ COMANDI POPOLARI
-Ecco un assaggio di quello che puoi fare:
-- `!menu` - Visualizza la lista completa dei poteri.
-- `!ai [domanda]` - Chiedi qualunque cosa all'intelligenza artificiale.
-- `!yt [url]` - Scarica video da YouTube in un lampo.
-- `!sticker` - Trasforma l'ultima immagine inviata in uno sticker.
-- `!kick @user` - Rimuovi un utente fastidioso (solo Admin).
+* `!menu` - Visualizza la lista completa.
+* `!ai` - Chiedi all'intelligenza artificiale.
+* `!yt` - Scarica video da YouTube HD.
+* `!sticker` - Crea sticker istantanei.
+* `!kick` - Rimuovi utenti dal gruppo.
 
 ---
 
