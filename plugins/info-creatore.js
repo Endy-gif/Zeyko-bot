@@ -1,4 +1,4 @@
-let handler = async (m, { conn }) => {
+let handler = async (m, { conn, usedPrefix }) => {
   let mention = `@${m.sender.split('@')[0]}`
   let text = `
 *╭───╼ ⚡ ╾───╮*
@@ -15,41 +15,34 @@ ecco i riferimenti ufficiali del mio creatore.
 *┗━━━━━━━━━━━━━━━━┛*
 
 *───╼  SOCIAL LINKS  ╾───*
-『 🔗 』*GitHub:* https://github.com/BLOOD212
+『 🔗 』*GitHub:* github.com/BLOOD212
 『 📸 』*Instagram:* @blood_ilreal
 
 ━━━━━━━━━━━━━━━━━━━━
    *😈 𝖇𝖑𝖔𝖔𝖉 𝖉𝖔𝖒𝖎𝖓𝖆 ⚡*
 ━━━━━━━━━━━━━━━━━━━━`.trim()
 
-  await conn.sendMessage(m.chat, {
-    text: text,
-    footer: 'ᴘᴏᴡᴇʀᴇᴅ ʙʏ ʙʟᴅ ʙʟᴏᴏᴅ ʙᴏᴛ',
-    mentions: [m.sender],
-    buttons: [
-      {
-        name: "cta_url",
-        buttonParamsJson: JSON.stringify({
-          display_text: "📸 Instagram",
-          url: "https://www.instagram.com/blood_ilreal"
-        })
-      },
-      {
-        name: "cta_url",
-        buttonParamsJson: JSON.stringify({
-          display_text: "💻 GitHub Repository",
-          url: "https://github.com/BLOOD212/BLD-BLOOD-BOT"
-        })
-      },
-      {
-        name: "quick_reply",
-        buttonParamsJson: JSON.stringify({
-          display_text: "🛡️ Menu Comandi",
-          id: ".menu"
-        })
-      }
-    ]
-  }, { quoted: m })
+  // Struttura compatibile per bottoni interattivi
+  const buttons = [
+    { buttonId: `${usedPrefix}menu`, buttonText: { displayText: '🛡️ MENU' }, type: 1 },
+    { buttonId: `${usedPrefix}ping`, buttonText: { displayText: '⚡ STATUS' }, type: 1 }
+  ]
+
+  const buttonMessage = {
+      text: text,
+      footer: 'ᴘᴏᴡᴇʀᴇᴅ ʙʏ ʙʟᴅ ʙʟᴏᴏᴅ ʙᴏᴛ',
+      buttons: buttons,
+      headerType: 1,
+      mentions: [m.sender]
+  }
+
+  try {
+    await conn.sendMessage(m.chat, buttonMessage, { quoted: m })
+  } catch (e) {
+    // Se i bottoni falliscono ancora, invia il testo semplice (fallback)
+    console.error("Errore invio bottoni:", e)
+    await conn.reply(m.chat, text, m, { mentions: [m.sender] })
+  }
 }
 
 handler.help = ['owner']
