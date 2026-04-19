@@ -1,41 +1,42 @@
 import fetch from 'node-fetch';
 
 let handler = async (m, { conn }) => {
-    // URL di ricerca per l'hashtag #meme
-    let searchUrl = `https://www.tikwm.com/api/feed/search?keywords=meme&count=15&cursor=0`;
+    // Cerchiamo video con hashtag meme
+    let searchUrl = `https://www.tikwm.com/api/feed/search?keywords=meme&count=20&cursor=0`;
     
-    // Messaggio di attesa (opzionale, puoi rimuoverlo)
-    m.reply('⏳ Sto cercando e scaricando un meme casuale...');
-
     try {
         let res = await fetch(searchUrl);
         let json = await res.json();
 
         if (!json.data || !json.data.videos || json.data.videos.length === 0) {
-            return m.reply('❌ Non ho trovato alcun video. Riprova tra poco.');
+            return m.reply('❌ Non ho trovato meme al momento.');
         }
 
-        // Seleziona un video casuale dai risultati
+        // Scegliamo un video a caso
         let videos = json.data.videos;
         let randomVideo = videos[Math.floor(Math.random() * videos.length)];
+        let videoUrl = randomVideo.play; // URL del video senza watermark
 
-        // 'play' è l'URL del video senza watermark
-        let videoUrl = randomVideo.play;
+        // --- IL PASSAGGIO CHIAVE: SCARICAMENTO EFFETTIVO ---
+        // Scarichiamo il video trasformandolo in un Buffer (dati binari)
+        let response = await fetch(videoUrl);
+        let buffer = await response.buffer();
 
-        // Invia il video direttamente (il bot lo scarica e lo inoltra)
+        // Inviamo il Buffer come file video reale
         await conn.sendMessage(
-            m.chat,
-            {
-                video: { url: videoUrl },
-                caption: `✨ *Meme trovato!*\n\n👤 *User:* ${randomVideo.author.unique_id}\n📝 *Titolo:* ${randomVideo.title || 'Senza titolo'}\n🎵 *Audio:* ${randomVideo.music_info.title}`,
-                mimetype: 'video/mp4'
-            },
+            m.chat, 
+            { 
+                video: buffer, 
+                caption: `😂 *Meme caricato!*\n👤 @${randomVideo.author.unique_id}`,
+                mimetype: 'video/mp4',
+                fileName: `meme.mp4`
+            }, 
             { quoted: m }
         );
 
     } catch (e) {
         console.error(e);
-        m.reply('⚠️ Errore durante lo scaricamento del video. Riprova.');
+        m.reply('⚠️ Errore nel download del video.');
     }
 };
 
