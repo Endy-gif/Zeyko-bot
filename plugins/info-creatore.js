@@ -19,53 +19,47 @@ ecco i riferimenti ufficiali del mio creatore.
 『 📸 』*Instagram:* @blood_ilreal
 
 ━━━━━━━━━━━━━━━━━━━━
-   *😈 BLD-BLOOD-BOT ⚡*
+   *😈 𝖇𝖑𝖔𝖔𝖉 𝖉𝖔𝖒𝖎𝖓𝖆 ⚡*
 ━━━━━━━━━━━━━━━━━━━━`.trim()
 
-  const buttons = [
-    {
-      name: "cta_url",
-      buttonParamsJson: JSON.stringify({
-        display_text: "💻 GitHub",
-        url: "https://github.com/BLOOD212/BLD-BLOOD-BOT"
-      })
-    },
-    {
-      name: "cta_url",
-      buttonParamsJson: JSON.stringify({
-        display_text: "📸 Instagram",
-        url: "https://www.instagram.com/blood_ilreal"
-      })
-    },
-    {
-      name: "quick_reply",
-      buttonParamsJson: JSON.stringify({
-        display_text: "⚡ Status",
-        id: `${usedPrefix}ping`
-      })
-    },
-    {
-      name: "quick_reply",
-      buttonParamsJson: JSON.stringify({
-        display_text: "🛡️ Menu",
-        id: `${usedPrefix}menu`
-      })
-    }
-  ]
-
-  try {
-    await conn.sendMessage(m.chat, {
-      text: text,
-      footer: 'ᴘᴏᴡᴇʀᴇᴅ ʙʏ ʙʟᴅ ʙʟᴏᴏᴅ ʙᴏᴛ',
-      mentions: [m.sender],
-      buttons: buttons,
-      viewOnce: true // Fondamentale per le nuove versioni di WhatsApp
-    }, { quoted: m })
-  } catch (e) {
-    console.error("Errore invio bottoni:", e)
-    // Fallback in caso di errore totale
-    await conn.reply(m.chat, text, m, { mentions: [m.sender] })
+  let msg = {
+    viewOnce: true,
+    text: text,
+    footer: 'ᴘᴏᴡᴇʀᴇᴅ ʙʏ ʙʟᴅ ʙʟᴏᴏᴅ ʙᴏᴛ',
+    mentions: [m.sender],
+    buttons: [
+      {
+        buttonId: `${usedPrefix}ping`,
+        buttonText: { displayText: '⚡ Status' },
+        type: 1
+      },
+      {
+        buttonId: `${usedPrefix}menu`,
+        buttonText: { displayText: '🛡️ Menu' },
+        type: 1
+      },
+      {
+        name: "cta_url",
+        buttonParamsJson: JSON.stringify({
+          display_text: "💻 GitHub",
+          url: "https://github.com/BLOOD212/BLD-BLOOD-BOT",
+          merchant_url: "https://github.com/BLOOD212/BLD-BLOOD-BOT"
+        })
+      },
+      {
+        name: "cta_url",
+        buttonParamsJson: JSON.stringify({
+          display_text: "📸 Instagram",
+          url: "https://www.instagram.com/blood_ilreal",
+          merchant_url: "https://www.instagram.com/blood_ilreal"
+        })
+      }
+    ]
   }
+
+  // Se i bottoni misti danno problemi, Baileys a volte richiede di inviarli separatamente.
+  // Ma proviamo prima la soluzione standard.
+  await conn.sendMessage(m.chat, msg, { quoted: m })
 }
 
 handler.help = ['owner']
