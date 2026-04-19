@@ -22,44 +22,38 @@ ecco i riferimenti ufficiali del mio creatore.
    *😈 𝖇𝖑𝖔𝖔𝖉 𝖉𝖔𝖒𝖎𝖓𝖆 ⚡*
 ━━━━━━━━━━━━━━━━━━━━`.trim()
 
-  let msg = {
-    viewOnce: true,
-    text: text,
-    footer: 'ᴘᴏᴡᴇʀᴇᴅ ʙʏ ʙʟᴅ ʙʟᴏᴏᴅ ʙᴏᴛ',
-    mentions: [m.sender],
-    buttons: [
-      {
-        buttonId: `${usedPrefix}ping`,
-        buttonText: { displayText: '⚡ Status' },
-        type: 1
-      },
-      {
-        buttonId: `${usedPrefix}menu`,
-        buttonText: { displayText: '🛡️ Menu' },
-        type: 1
-      },
-      {
-        name: "cta_url",
-        buttonParamsJson: JSON.stringify({
-          display_text: "💻 GitHub",
-          url: "https://github.com/BLOOD212/BLD-BLOOD-BOT",
-          merchant_url: "https://github.com/BLOOD212/BLD-BLOOD-BOT"
-        })
-      },
-      {
-        name: "cta_url",
-        buttonParamsJson: JSON.stringify({
-          display_text: "📸 Instagram",
-          url: "https://www.instagram.com/blood_ilreal",
-          merchant_url: "https://www.instagram.com/blood_ilreal"
-        })
-      }
-    ]
+  // Struttura bottoni V1 (quella che hai confermato funzionante)
+  const buttons = [
+    { buttonId: `${usedPrefix}menu`, buttonText: { displayText: '🛡️ MENU' }, type: 1 },
+    { buttonId: `${usedPrefix}ping`, buttonText: { displayText: '⚡ STATUS' }, type: 1 },
+    { buttonId: `.info_git`, buttonText: { displayText: '💻 GITHUB' }, type: 1 },
+    { buttonId: `.info_insta`, buttonText: { displayText: '📸 INSTAGRAM' }, type: 1 }
+  ]
+
+  const buttonMessage = {
+      text: text,
+      footer: 'ᴘᴏᴡᴇʀᴇᴅ ʙʏ ʙʟᴅ ʙʟᴏᴏᴅ ʙᴏᴛ',
+      buttons: buttons,
+      headerType: 1,
+      mentions: [m.sender]
   }
 
-  // Se i bottoni misti danno problemi, Baileys a volte richiede di inviarli separatamente.
-  // Ma proviamo prima la soluzione standard.
-  await conn.sendMessage(m.chat, msg, { quoted: m })
+  try {
+    await conn.sendMessage(m.chat, buttonMessage, { quoted: m })
+  } catch (e) {
+    console.error("Errore invio bottoni:", e)
+    await conn.reply(m.chat, text, m, { mentions: [m.sender] })
+  }
+}
+
+// Comandi extra per far funzionare i bottoni dei link se cliccati
+handler.before = async (m, { conn }) => {
+  if (m.text === '.info_git') {
+    await conn.reply(m.chat, '💻 *GitHub:* https://github.com/BLOOD212/BLD-BLOOD-BOT', m)
+  }
+  if (m.text === '.info_insta') {
+    await conn.reply(m.chat, '📸 *Instagram:* https://www.instagram.com/blood_ilreal', m)
+  }
 }
 
 handler.help = ['owner']
