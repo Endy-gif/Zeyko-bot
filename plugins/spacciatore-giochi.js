@@ -9,7 +9,7 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
     let ora = Date.now()
     let oggi = new Date().toLocaleDateString('it-IT')
 
-    // Inizializzazione della piazza specifica per questa chat
+    // Inizializzazione piazza
     if (!global.piazze[chat]) {
         global.piazze[chat] = {
             boss: null,
@@ -21,22 +21,18 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
     }
 
     let piazza = global.piazze[chat]
-    
-    // Database utenti
     global.db.data.users[user] = global.db.data.users[user] || { euro: 0 }
     let dbUser = global.db.data.users[user]
 
-    // --- 1. DIVENTA BOSS DEL GRUPPO ---
+    // --- 1. DIVENTASPACCINO ---
     if (command === 'diventaspaccino') {
         let bossAttivo = piazza.boss && ora < piazza.scadenza
-        
         if (bossAttivo) {
             let oreMancanti = Math.ceil((piazza.scadenza - ora) / (1000 * 60 * 60))
-            return conn.reply(chat, `⚠️ La piazza è già occupata da @${piazza.boss.split('@')[0]}.\nTorna tra ${oreMancanti} ore!`, m, { mentions: [piazza.boss] })
+            return conn.reply(chat, `⚠️ La piazza è occupata da @${piazza.boss.split('@')[0]}.\nLibera tra ${oreMancanti} ore!`, m, { mentions: [piazza.boss] })
         }
-        
         if (piazza.storico[user] === oggi) {
-            return conn.reply(chat, '🚫 Hai già gestito la piazza in questo turno. Lascia spazio agli altri!', m)
+            return conn.reply(chat, '🚫 Hai già gestito la piazza oggi. Aspetta il prossimo turno!', m)
         }
 
         piazza.boss = user
@@ -46,73 +42,80 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
 
         let intro = `ㅤ⋆｡˚『 ╭ \`👑 NUOVO BOSS LOCALE 👑\` ╯ 』˚｡⋆\n╭\n`
         intro += `│ 『 👤 』 @${user.split('@')[0]} è lo spaccino del gruppo!\n`
-        intro += `│ 『 💰 』 Tutti i profitti della chat andranno a lui.\n`
         intro += `│ 『 ⏳ 』 Scadenza: 24 ore.\n`
         intro += `*╰⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─*`
 
-        return conn.sendMessage(chat, { text: intro, mentions: [user] }, { quoted: m })
+        const buttons = [
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '📦 VEDI LISTINO', id: `${usedPrefix}spaccino` }) }
+        ]
+        return conn.sendMessage(chat, { text: intro, footer, mentions: [user], interactiveButtons: buttons }, { quoted: m })
     }
 
-    // --- 2. IL LISTINO ---
+    // --- 2. SPACCINO (CON BOTTONI) ---
     if (command === 'spaccino') {
         if (!piazza.boss || ora > piazza.scadenza) {
-            return conn.reply(chat, `🏙️ La piazza è libera. Usa \`${usedPrefix}diventaspaccino\`!`, m)
+            const btnBoss = [{ name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '👑 DIVENTA BOSS', id: `${usedPrefix}diventaspaccino` }) }]
+            return conn.sendMessage(chat, { text: `🏙️ Piazza libera. Vuoi prenderne il controllo?`, footer, interactiveButtons: btnBoss }, { quoted: m })
         }
 
         let menu = `ㅤ⋆｡˚『 ╭ \`🍀 MERCATO DI @${piazza.boss.split('@')[0].toUpperCase()} 🍀\` ╯ 』˚｡⋆\n╭\n`
-        menu += `│ 『 🚬 』 *1. Erba* ➔ ${piazza.prezzi['1']}€\n`
-        menu += `│ 『 🍋 』 *2. Haze* ➔ ${piazza.prezzi['2']}€\n`
-        menu += `│ 『 🍫 』 *3. Resina* ➔ ${piazza.prezzi['3']}€\n`
-        menu += `│ 『 👺 』 *4. Amnesia* ➔ ${piazza.prezzi['4']}€\n`
+        menu += `│ 『 🚬 』 Erba: ${piazza.prezzi['1']}€\n`
+        menu += `│ 『 🍋 』 Haze: ${piazza.prezzi['2']}€\n`
+        menu += `│ 『 🍫 』 Resina: ${piazza.prezzi['3']}€\n`
+        menu += `│ 『 👺 』 Amnesia: ${piazza.prezzi['4']}€\n`
         menu += `│ ──────────────────\n`
-        menu += `│ 『 🪙 』 \`Incasso attuale:\` ${piazza.banca}€\n`
-        menu += `│ 『 🛒 』 Usa: \`${usedPrefix}compra <1-4>\`\n`
+        menu += `│ 『 🪙 』 Incasso Boss: ${piazza.banca}€\n`
         menu += `*╰⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─*`
-        return conn.sendMessage(chat, { text: menu, mentions: [piazza.boss] }, { quoted: m })
+
+        const buttons = [
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🌿 ERBA', id: `${usedPrefix}compra 1` }) },
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🍋 HAZE', id: `${usedPrefix}compra 2` }) },
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🍫 RESINA', id: `${usedPrefix}compra 3` }) },
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '👺 AMNESIA', id: `${usedPrefix}compra 4` }) }
+        ]
+        return conn.sendMessage(chat, { text: menu, footer, mentions: [piazza.boss], interactiveButtons: buttons }, { quoted: m })
     }
 
     // --- 3. COMPRA ---
     if (command === 'compra') {
-        if (!piazza.boss || ora > piazza.scadenza) return m.reply('❌ Piazza vuota.')
-        if (user === piazza.boss) return m.reply('🤨 Sei il boss, fuma gratis con `.fuma`!')
+        if (!piazza.boss || ora > piazza.scadenza) return m.reply('❌ Nessuno spaccia.')
+        if (user === piazza.boss) return m.reply('🤨 Sei il boss, usa direttamente `.fuma`!')
 
         let scelta = text.trim()
-        if (!['1', '2', '3', '4'].includes(scelta)) return m.reply('📦 Scegli un prodotto (1-4).')
+        if (!['1', '2', '3', '4'].includes(scelta)) return m.reply('📦 Scegli un prodotto dal menu.')
         
         let prezzo = piazza.prezzi[scelta]
-        if (dbUser.euro < prezzo) return m.reply(`📉 Non hai ${prezzo}€!`)
+        if (dbUser.euro < prezzo) return m.reply(`📉 Non hai abbastanza euro!`)
 
         dbUser.euro -= prezzo
         piazza.banca += prezzo
-        
         global.db.data.users[piazza.boss] = global.db.data.users[piazza.boss] || { euro: 0 }
         global.db.data.users[piazza.boss].euro += prezzo
 
         dbUser.tasca_droga = { id: scelta, nome: ['Erba', 'Haze', 'Resina', 'Amnesia'][parseInt(scelta)-1] }
 
-        return conn.reply(chat, `✅ Hai comprato *${dbUser.tasca_droga.nome}*.\nI soldi sono stati accreditati al Boss @${piazza.boss.split('@')[0]}`, m, { mentions: [piazza.boss] })
+        const buttons = [{ name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🔥 ACCENDI', id: `${usedPrefix}fuma` }) }]
+        return conn.sendMessage(chat, { text: `✅ Hai comprato *${dbUser.tasca_droga.nome}*.\nI soldi sono andati al Boss.`, footer, interactiveButtons: buttons }, { quoted: m })
     }
 
     // --- 4. FUMA ---
     if (command === 'fuma') {
         let isBoss = (user === piazza.boss && ora < piazza.scadenza)
-        if (!dbUser.tasca_droga && !isBoss) return m.reply('🤷‍♂️ Non hai roba. Passa dallo spaccino!')
+        if (!dbUser.tasca_droga && !isBoss) return m.reply('🤷‍♂️ Tasche vuote.')
 
         let qualita = isBoss ? 4 : parseInt(dbUser.tasca_droga.id)
-        let nomeRoba = isBoss ? "Riserva del Boss" : dbUser.tasca_droga.nome
-        
         const moodArr = [
-            { t: '🚨 PARANOIA', d: 'Senti le sirene? Nasconditi sotto il letto!' },
-            { t: '🍔 FAME CHIMICA', d: 'Hai appena svaligiato una panetteria intera.' },
-            { t: '☁️ RELAX', d: 'Ti senti leggero come una nuvola di fumo.' },
-            { t: '🐲 TRIP', d: 'Stai vedendo i draghi volare nei messaggi del gruppo.' }
+            { t: '🚨 PARANOIA', d: 'Stai fissando la maniglia della porta...' },
+            { t: '🍔 FAME CHIMICA', d: 'Hai appena mangiato un pacchetto di cracker del 2015.' },
+            { t: '☁️ RELAX', d: 'Ti senti fuso con il materasso.' },
+            { t: '🐲 TRIP', d: 'Stai vedendo i colori della musica.' }
         ]
         let mSel = moodArr[qualita - 1]
 
         let cap = `ㅤ⋆｡˚『 ╭ \`🌬️ SESSIONE DI FUMO\` ╯ 』˚｡⋆\n╭\n`
-        cap += `│ 『 🌿 』 \`Prodotto:\` *${nomeRoba}*\n`
-        cap += `│ 『 🎭 』 \`Effetto:\` *${mSel.t}*\n`
-        cap += `│ 『 ✨ 』 \`Mood:\` *${mSel.d}*\n`
+        cap += `│ 『 🌿 』 \`Roba:\` *${isBoss ? 'Riserva Boss' : dbUser.tasca_droga.nome}*\n`
+        cap += `│ 『 🎭 』 \`Mood:\` *${mSel.t}*\n`
+        cap += `│ 『 ✨ 』 \`Effetto:\` *${mSel.d}*\n`
         cap += `*╰⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─*`
 
         if (!isBoss) delete dbUser.tasca_droga
