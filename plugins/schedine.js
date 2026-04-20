@@ -1,4 +1,5 @@
-//By Bonzino & Gemini
+//By Bonzino 
+
 import fs from 'fs'
 
 const SNAI_PATH = './media/snai.png'
@@ -31,18 +32,19 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   const user = global.db.data.users[who]
   const puntata = parseInt(args[0])
   const tipoCampionato = args[1] 
-  const scommessa = args[2]?.toUpperCase() // 1, X, 2, UNDER, OVER, GOAL, NOGOAL
+  const scommessa = args[2]?.toUpperCase()
 
   // STEP 1: Selezione Puntata
   if (!puntata || isNaN(puntata)) {
     const buttons = [
-      { buttonId: `${usedPrefix + command} 100`, buttonText: { displayText: '💸 100€' }, type: 1 },
-      { buttonId: `${usedPrefix + command} 500`, buttonText: { displayText: '💸 500€' }, type: 1 },
-      { buttonId: `${usedPrefix + command} 1000`, buttonText: { displayText: '💸 1000€' }, type: 1 }
+      { buttonId: `${usedPrefix + command} 100`, buttonText: { displayText: '💵 100€' }, type: 1 },
+      { buttonId: `${usedPrefix + command} 500`, buttonText: { displayText: '💵 500€' }, type: 1 },
+      { buttonId: `${usedPrefix + command} 1000`, buttonText: { displayText: '💵 1000€' }, type: 1 }
     ]
+    const cap = `╔════════════════╗\n     🎰  *SNAI BETTING* 🎰\n╚════════════════╝\n\n👤 *UTENTE:* @${who.split('@')[0]}\n💰 *SALDO:* ${formatNumber(user.euro)}€\n\n💸 _Quanto vuoi puntare su questa sfida?_`
     return conn.sendMessage(m.chat, {
       ...(fs.existsSync(SNAI_PATH) ? { image: fs.readFileSync(SNAI_PATH) } : {}),
-      caption: `⚽ *SNAI BETTING*\n\n👤 Utente: @${who.split('@')[0]}\n💰 Saldo: ${formatNumber(user.euro)}€\n\nQuanto vuoi puntare?`,
+      caption: cap,
       buttons,
       mentions: [who]
     }, { quoted: m })
@@ -54,10 +56,12 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
       { buttonId: `${usedPrefix + command} ${puntata} SERIEA`, buttonText: { displayText: '🇮🇹 SERIE A' }, type: 1 },
       { buttonId: `${usedPrefix + command} ${puntata} MONDIALI`, buttonText: { displayText: '🌎 MONDIALI' }, type: 1 }
     ]
-    return conn.sendMessage(m.chat, { text: `🎰 *PUNTATA: ${formatNumber(puntata)}€*\n\nSeleziona la competizione:`, buttons }, { quoted: m })
+    return conn.sendMessage(m.chat, { 
+        text: `💰 *PUNTATA:* ${formatNumber(puntata)}€\n\n🏆 _Seleziona la competizione desiderata:_`, 
+        buttons 
+    }, { quoted: m })
   }
 
-  // Generazione Match
   const lista = CAMPIONATI[tipoCampionato === 'SERIEA' ? "SERIE A" : "MONDIALI"]
   const casa = pickRandom(lista)
   const trasf = pickRandom(lista.filter(s => s !== casa))
@@ -65,16 +69,19 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   // STEP 3: Selezione Mercato Scommesse
   if (!scommessa) {
     const buttons = [
-      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 1`, buttonText: { displayText: `(1) ${casa}` }, type: 1 },
-      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} X`, buttonText: { displayText: '(X) Pareggio' }, type: 1 },
-      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 2`, buttonText: { displayText: `(2) ${trasf}` }, type: 1 },
-      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} OVER`, buttonText: { displayText: 'Over 2.5' }, type: 1 },
-      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} GOAL`, buttonText: { displayText: 'Goal' }, type: 1 }
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 1`, buttonText: { displayText: `🏠 (1) ${casa}` }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} X`, buttonText: { displayText: '🤝 (X) Pareggio' }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 2`, buttonText: { displayText: `✈️ (2) ${trasf}` }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} OVER`, buttonText: { displayText: '📈 Over 2.5' }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} GOAL`, buttonText: { displayText: '⚽ Goal' }, type: 1 }
     ]
-    return conn.sendMessage(m.chat, { text: `⚔️ *MATCH:* ${casa} vs ${trasf}\n\nScegli la tua giocata:`, buttons }, { quoted: m })
+    return conn.sendMessage(m.chat, { 
+        text: `⚔️ *MATCH:* ${casa}  vs  ${trasf}\n🏆 *CAMP:* ${tipoCampionato}\n\n🎯 _Scegli il tuo pronostico vincente:_`, 
+        buttons 
+    }, { quoted: m })
   }
 
-  if (user.euro < puntata) return m.reply(`Saldo insufficiente! Hai ${formatNumber(user.euro)}€`)
+  if (user.euro < puntata) return m.reply(`❌ *SALDO INSUFFICIENTE!*\n\nHai solo ${formatNumber(user.euro)}€`)
   user.euro -= puntata
 
   // Logica Risultato
@@ -83,7 +90,6 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   const totaleGol = golCasa + golTrasf
   const esito1X2 = golCasa > golTrasf ? '1' : (golCasa < golTrasf ? '2' : 'X')
   
-  // Verifica Vincita
   let vinto = false
   let descScommessa = ""
   if (scommessa === '1') { vinto = esito1X2 === '1'; descScommessa = `Vittoria ${casa}` }
@@ -96,8 +102,8 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   const vincita = Math.floor(puntata * quota)
 
   // Inizio Live
-  let liveText = `🏟️ *PARTITA: ${casa} vs ${trasf}*\n\n🎫 *SCHEDINA:* ${descScommessa} (x${quota})\n💰 *PUNTATA:* ${formatNumber(puntata)}€\n────────────────────`
-  const live = await conn.sendMessage(m.chat, { text: liveText + `\n⌚ Minuto: 0'\n⚽ Risultato: 0 - 0` })
+  let liveText = `🏟️ *MATCH:* ${casa} vs ${trasf}\n\n🎫 *GIOCATA:* ${descScommessa}\n📈 *QUOTA:* x${quota}\n💵 *PUNTATA:* ${formatNumber(puntata)}€\n\n───────────────────`
+  const live = await conn.sendMessage(m.chat, { text: liveText + `\n\n⌚ Minuto: 0'\n⚽ Punteggio: 0 - 0` })
 
   for (let i = 1; i <= 4; i++) {
     await new Promise(r => setTimeout(r, 2500))
@@ -110,11 +116,13 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   await new Promise(r => setTimeout(r, 2000))
   if (vinto) user.euro += vincita
   
-  liveText += `\n────────────────────\n🏁 *FINALE: ${golCasa} - ${golTrasf}*\n\n${vinto ? `✅ *VINTA!* +${formatNumber(vincita)}€` : `❌ *PERSA!* -${formatNumber(puntata)}€`}\n🏦 Saldo: ${formatNumber(user.euro)}€`
+  liveText += `\n───────────────────\n🏁 *FISCHIO FINALE: ${golCasa} - ${golTrasf}*\n\n${vinto ? `✅ *SCHEDINA VINTA!* +${formatNumber(vincita)}€` : `❌ *SCHEDINA PERSA!* -${formatNumber(puntata)}€`}\n🏦 *SALDO:* ${formatNumber(user.euro)}€`
   await modificaMessaggio(conn, m.chat, live.key, liveText)
 }
 
+handler.help = ['schedina']
+handler.tags = ['game']
 handler.command = /^(schedina|bet)$/i
 handler.group = true
-handler.tags = ('giochi')
+
 export default handler
