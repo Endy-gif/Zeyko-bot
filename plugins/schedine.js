@@ -1,5 +1,4 @@
 //By Bonzino
-
 import fs from 'fs'
 import path from 'path'
 import Jimp from 'jimp'
@@ -9,7 +8,6 @@ const SFONDO_PATH = path.join(CARTELLA_CACHE, 'sfondo_serie_a.png')
 const SNAI_PATH = './media/snai.png'
 const SFONDO_URL = 'https://i.imgur.com/3GbgP6K.png'
 
-// DATABASE SQUADRE INTEGRATO
 const SQUADRE = [
   { nome: "Atalanta", logo: "https://upload.wikimedia.org/wikipedia/it/thumb/6/66/Atalanta_BC_logo.svg/1200px-Atalanta_BC_logo.svg.png", file: "atalanta.png" },
   { nome: "Bologna", logo: "https://upload.wikimedia.org/wikipedia/it/thumb/5/5b/Bologna_FC_logo.svg/1200px-Bologna_FC_logo.svg.png", file: "bologna.png" },
@@ -38,94 +36,32 @@ const EVENTI = ['goal', 'parata', 'palo', 'ammonizione', 'var', 'occasione', 'co
 function formatNumber(num) { return new Intl.NumberFormat('it-IT').format(num) }
 function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)] }
 
-function pickTwoTeams() {
-  const casa = pickRandom(SQUADRE)
-  const trasf = pickRandom(SQUADRE.filter(s => s.nome !== casa.nome))
-  return { casa, trasf }
-}
-
-function generaQuota() { return (Math.random() * (4.2 - 1.55) + 1.55).toFixed(2) }
-
-function generaRisultato(vittoriaCasa) {
+function generaRisultatoReale(segnoScelto) {
   let golCasa = Math.floor(Math.random() * 4)
   let golTrasf = Math.floor(Math.random() * 4)
-  if (vittoriaCasa && golCasa <= golTrasf) golCasa = golTrasf + 1
-  if (!vittoriaCasa && golTrasf <= golCasa) golTrasf = golCasa + 1
-  return { golCasa, golTrasf }
-}
+  
+  // Probabilità che il segno scelto si avveri (es. 40%)
+  const vinceScommessa = Math.random() < 0.4 
 
-function eventoCasuale(casa, trasf) {
-  const tipo = pickRandom(EVENTI)
-  switch (tipo) {
-    case 'goal': return `⚽ *𝐆𝐎𝐀𝐋!* ${pickRandom([casa, trasf])} 𝐬𝐛𝐥𝐨𝐜𝐜𝐚 𝐥𝐚 𝐩𝐚𝐫𝐭𝐢𝐭𝐚!`
-    case 'parata': return `🧤 *𝐏𝐀𝐑𝐀𝐓𝐀 𝐃𝐄𝐂𝐈𝐒𝐈𝐕𝐀!* 𝐈𝐥 𝐩𝐨𝐫𝐭𝐢𝐞𝐫𝐞 𝐝𝐞𝐥 ${pickRandom([casa, trasf])} 𝐬𝐚𝐥𝐯𝐚 𝐭𝐮𝐭𝐭𝐨.`
-    case 'palo': return `😱 *𝐏𝐀𝐋𝐎!* ${pickRandom([casa, trasf])} 𝐚 𝐮𝐧 𝐩𝐚𝐬𝐬𝐨 𝐝𝐚𝐥 𝐠𝐨𝐚𝐥.`
-    case 'ammonizione': return `🟨 *𝐀𝐌𝐌𝐎𝐍𝐈𝐙𝐈𝐎𝐍𝐄* 𝐩𝐞𝐫 𝐮𝐧 𝐠𝐢𝐨𝐜𝐚𝐭𝐨𝐫𝐞 𝐝𝐞𝐥 ${pickRandom([casa, trasf])}.`
-    case 'var': return `🖥️ *𝐕𝐀𝐑 𝐈𝐍 𝐂𝐎𝐑𝐒𝐎...* 𝐜𝐡𝐞𝐜𝐤 𝐩𝐞𝐫 𝐮𝐧 𝐞𝐩𝐢𝐬𝐨𝐝𝐢𝐨 𝐝𝐮𝐛𝐛𝐢𝐨.`
-    case 'occasione': return `🔥 *𝐆𝐑𝐀𝐍𝐃𝐄 𝐎𝐂𝐂𝐀𝐒𝐈𝐎𝐍𝐄!* ${pickRandom([casa, trasf])} 𝐚𝐝 𝐮𝐧 𝐬𝐨𝐟𝐟𝐢𝐨 𝐝𝐚𝐥 𝐯𝐚𝐧𝐭𝐚𝐠𝐠𝐢𝐨.`
-    case 'corner': return `🚩 *𝐂𝐀𝐋𝐂𝐈𝐎 𝐃'𝐀𝐍𝐆𝐎𝐋𝐎* 𝐢𝐧 𝐟𝐚𝐯𝐨𝐫𝐞 𝐝𝐞𝐥 ${pickRandom([casa, trasf])}.`
-    case 'contropiede': return `⚡ *𝐂𝐎𝐍𝐓𝐑𝐎𝐏𝐈𝐄𝐃𝐄 𝐕𝐄𝐋𝐄𝐍𝐎𝐒𝐎* 𝐝𝐞𝐥 ${pickRandom([casa, trasf])}!`
-    case 'fuorigioco': return `🚫 *𝐅𝐔𝐎𝐑𝐈𝐆𝐈𝐎𝐂𝐎* 𝐬𝐞𝐠𝐧𝐚𝐥𝐚𝐭𝐨, 𝐚𝐳𝐢𝐨𝐧𝐞 𝐬𝐟𝐮𝐦𝐚𝐭𝐚.`
-    case 'traversa': return `😵 *𝐓𝐑𝐀𝐕𝐄𝐑𝐒𝐀!* 𝐂𝐡𝐞 𝐛𝐫𝐢𝐯𝐢𝐝𝐨 𝐩𝐞𝐫 ${pickRandom([casa, trasf])}.`
-    default: return `⚽ *𝐏𝐚𝐫𝐭𝐢𝐭𝐚 𝐚𝐜𝐜𝐞𝐬𝐚* 𝐭𝐫𝐚 ${casa} 𝐞 ${trasf}.`
+  if (vinceScommessa) {
+    if (segnoScelto === '1') {
+        golCasa = Math.floor(Math.random() * 3) + 1
+        golTrasf = Math.floor(Math.random() * golCasa)
+    } else if (segnoScelto === '2') {
+        golTrasf = Math.floor(Math.random() * 3) + 1
+        golCasa = Math.floor(Math.random() * golTrasf)
+    } else {
+        golCasa = golTrasf = Math.floor(Math.random() * 3)
+    }
+  } else {
+    // Forza un risultato diverso dal segno scelto se "perde"
+    if (segnoScelto === '1' && golCasa >= golTrasf) golTrasf = golCasa + 1
+    if (segnoScelto === '2' && golTrasf >= golCasa) golCasa = golTrasf + 1
+    if (segnoScelto === 'X' && golCasa === golTrasf) golCasa++
   }
-}
-
-function generaCronaca(casa, trasf) {
-  return [
-    { minuto: "1'", testo: `🔔 *𝐂𝐚𝐥𝐜𝐢𝐨 𝐝'𝐢𝐧𝐢𝐳𝐢𝐨!*` },
-    { minuto: "9'", testo: eventoCasuale(casa.nome, trasf.nome) },
-    { minuto: "18'", testo: eventoCasuale(casa.nome, trasf.nome) },
-    { minuto: "27'", testo: eventoCasuale(casa.nome, trasf.nome) },
-    { minuto: "36'", testo: eventoCasuale(casa.nome, trasf.nome) },
-    { minuto: "45'", testo: `⏸️ *𝐅𝐢𝐧𝐞 𝐩𝐫𝐢𝐦𝐨 𝐭𝐞𝐦𝐩𝐨.*` },
-    { minuto: "46'", testo: `▶️ *𝐈𝐧𝐢𝐳𝐢𝐚 𝐢𝐥 𝐬𝐞𝐜𝐨𝐧𝐝𝐨 𝐭𝐞𝐦𝐩𝐨.*` },
-    { minuto: "58'", testo: eventoCasuale(casa.nome, trasf.nome) },
-    { minuto: "69'", testo: eventoCasuale(casa.nome, trasf.nome) },
-    { minuto: "78'", testo: eventoCasuale(casa.nome, trasf.nome) },
-    { minuto: "88'", testo: eventoCasuale(casa.nome, trasf.nome) },
-    { minuto: "90+'", testo: `⏳ *𝐑𝐞𝐜𝐮𝐩𝐞𝐫𝐨 𝐢𝐧 𝐜𝐨𝐫𝐬𝐨...*` }
-  ]
-}
-
-async function scaricaFile(url, destinazione) {
-  const response = await fetch(url)
-  if (!response.ok) throw new Error(`Download fallito: ${url}`)
-  const buffer = Buffer.from(await response.arrayBuffer())
-  fs.writeFileSync(destinazione, buffer)
-}
-
-async function assicuratiRisorseOnline(casa, trasf) {
-  if (!fs.existsSync(CARTELLA_CACHE)) fs.mkdirSync(CARTELLA_CACHE, { recursive: true })
-  if (!fs.existsSync(SFONDO_PATH)) await scaricaFile(SFONDO_URL, SFONDO_PATH)
-  const pathLogoCasa = path.join(CARTELLA_CACHE, casa.file)
-  const pathLogoTrasf = path.join(CARTELLA_CACHE, trasf.file)
-  if (!fs.existsSync(pathLogoCasa)) await scaricaFile(casa.logo, pathLogoCasa)
-  if (!fs.existsSync(pathLogoTrasf)) await scaricaFile(trasf.logo, pathLogoTrasf)
-  return { pathLogoCasa, pathLogoTrasf }
-}
-
-async function creaLocandinaPartita(casa, trasf, quota, puntata, vincita) {
-  const { pathLogoCasa, pathLogoTrasf } = await assicuratiRisorseOnline(casa, trasf)
-  const base = await Jimp.read(SFONDO_PATH)
-  const logoCasa = await Jimp.read(pathLogoCasa)
-  const logoTrasf = await Jimp.read(pathLogoTrasf)
-  const fontBig = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE)
-  const fontMed = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE)
-  const fontSmall = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
-  logoCasa.contain(140, 140)
-  logoTrasf.contain(140, 140)
-  base.composite(logoCasa, 120, 130)
-  base.composite(logoTrasf, 640, 130)
-  base.print(fontBig, 0, 145, { text: 'VS', alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER, alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE }, base.bitmap.width, 80)
-  base.print(fontMed, 60, 300, casa.nome)
-  base.print(fontMed, 570, 300, trasf.nome)
-  base.print(fontSmall, 70, 390, `Puntata: ${formatNumber(puntata)}`)
-  base.print(fontSmall, 70, 420, `Quota: x${quota}`)
-  base.print(fontSmall, 70, 450, `Vincita: ${formatNumber(vincita)}`)
-  const out = path.join(CARTELLA_CACHE, `match_${Date.now()}.jpg`)
-  await base.quality(90).writeAsync(out)
-  return out
+  
+  let esitoFinale = golCasa > golTrasf ? '1' : (golCasa < golTrasf ? '2' : 'X')
+  return { golCasa, golTrasf, esitoFinale }
 }
 
 async function modificaMessaggio(conn, chatId, key, testo, mentions = []) {
@@ -134,65 +70,76 @@ async function modificaMessaggio(conn, chatId, key, testo, mentions = []) {
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   const who = m.sender
-  if (!global.db.data.users[who]) global.db.data.users[who] = {}
   const user = global.db.data.users[who]
-  if (typeof user.euro === 'undefined') user.euro = 0
   const puntata = parseInt(args[0])
+  const segno = args[1]?.toUpperCase() // 1, X, 2
 
-  if (!puntata || isNaN(puntata) || puntata <= 0) {
+  // STEP 1: Selezione Puntata
+  if (!puntata || isNaN(puntata)) {
     const buttons = [
-      { buttonId: `${usedPrefix + command} 10`, buttonText: { displayText: '💸 Punta 10' }, type: 1 },
-      { buttonId: `${usedPrefix + command} 100`, buttonText: { displayText: '💸 Punta 100' }, type: 1 },
-      { buttonId: `${usedPrefix + command} 500`, buttonText: { displayText: '💸 Punta 500' }, type: 1 }
+      { buttonId: `${usedPrefix + command} 100`, buttonText: { displayText: '💸 100€' }, type: 1 },
+      { buttonId: `${usedPrefix + command} 500`, buttonText: { displayText: '💸 500€' }, type: 1 },
+      { buttonId: `${usedPrefix + command} 1000`, buttonText: { displayText: '💸 1000€' }, type: 1 }
     ]
     return conn.sendMessage(m.chat, {
-      image: fs.existsSync(SNAI_PATH) ? fs.readFileSync(SNAI_PATH) : { url: 'https://i.imgur.com/vHIn7rA.png' },
-      caption: `╭━━━━━━━🎰━━━━━━━╮\n✦ 𝐒𝐂𝐎𝐌𝐌𝐄𝐒𝐒𝐀 ✦\n╰━━━━━━━🎰━━━━━━━╯\n\n👤 𝐔𝐭𝐞𝐧𝐭𝐞: @${who.split('@')[0]}\n💸 𝐃𝐞𝐧𝐚𝐫𝐨: ${formatNumber(user.euro)}\n\n📝 𝐒𝐞𝐥𝐞𝐳𝐢𝐨𝐧𝐚 𝐥𝐚 𝐩𝐮𝐧𝐭𝐚𝐭𝐚`,
-      footer: '⚽ 𝐒𝐢𝐬𝐭𝐞𝐦𝐚 𝐒𝐜𝐨𝐦𝐦𝐞𝐬𝐬𝐞',
-      buttons,
-      headerType: 4,
-      mentions: [who]
+      image: { url: 'https://i.imgur.com/vHIn7rA.png' },
+      caption: `⚽ *BENVENUTO NEL CENTRO SCOMMESSE*\n\nQuanto vuoi puntare?`,
+      footer: 'Seleziona un importo',
+      buttons
     }, { quoted: m })
   }
 
-  if (user.euro < puntata) return m.reply(`╭━━━━━━━💸━━━━━━━╮\n✦ 𝐃𝐄𝐍𝐀𝐑𝐎 𝐈𝐍𝐒𝐔𝐅𝐅𝐈𝐂𝐈𝐄𝐍𝐓𝐄 ✦\n╰━━━━━━━💸━━━━━━━╯\n\n💼 𝐇𝐚𝐢: ${formatNumber(user.euro)}\n💳 𝐏𝐮𝐧𝐭𝐚𝐭𝐚: ${formatNumber(puntata)}`)
+  // STEP 2: Selezione Segno (1, X, 2)
+  if (!segno || !['1', 'X', '2'].includes(segno)) {
+    const buttons = [
+      { buttonId: `${usedPrefix + command} ${puntata} 1`, buttonText: { displayText: '🏠 CASA (1)' }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} X`, buttonText: { displayText: '🤝 PAREGGIO (X)' }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} 2`, buttonText: { displayText: '✈️ TRASFERTA (2)' }, type: 1 }
+    ]
+    return conn.sendMessage(m.chat, {
+      text: `🎰 *SCOMMESSA DA ${puntata}€*\n\nSu quale esito vuoi puntare?`,
+      footer: 'Scegli il segno',
+      buttons
+    }, { quoted: m })
+  }
 
-  const { casa, trasf } = pickTwoTeams()
-  const quota = generaQuota()
-  const vincita = Math.floor(puntata * Number(quota))
-  const vittoriaCasa = Math.random() > 0.4
-  const risultato = generaRisultato(vittoriaCasa)
-  const cronaca = generaCronaca(casa, trasf)
+  if (user.euro < puntata) return m.reply(`Saldo insufficiente! Hai solo ${formatNumber(user.euro)}€`)
 
+  // LOGICA PARTITA
+  const casa = pickRandom(SQUADRE)
+  const trasf = pickRandom(SQUADRE.filter(s => s.nome !== casa.nome))
+  const quota = (Math.random() * (3.5 - 1.8) + 1.8).toFixed(2)
+  const vincita = Math.floor(puntata * quota)
+  const risultato = generaRisultatoReale(segno)
+  
   user.euro -= puntata
-  let immaginePartita = await creaLocandinaPartita(casa, trasf, quota, puntata, vincita).catch(() => null)
-
-  const messaggioIniziale = await conn.sendMessage(m.chat, {
-    ...(immaginePartita ? { image: fs.readFileSync(immaginePartita) } : { text: 'Inizio partita...' }),
-    caption: `╭━━━━━━━🎫━━━━━━━╮\n✦ 𝐒𝐂𝐇𝐄𝐃𝐈𝐍𝐀 𝐂𝐎𝐍𝐅𝐄𝐑𝐌𝐀𝐓𝐀 ✦\n╰━━━━━━━🎫━━━━━━━╯\n\n⚔️ 𝐌𝐚𝐭𝐜𝐡: ${casa.nome} vs ${trasf.nome}\n\n💸 𝐏𝐮𝐧𝐭𝐚𝐭𝐚: ${formatNumber(puntata)}\n📈 𝐐𝐮𝐨𝐭𝐚: x${quota}\n🏆 𝐕𝐢𝐧𝐜𝐢𝐭𝐚 𝐩𝐨𝐬𝐬𝐢𝐛𝐢𝐥𝐞: ${formatNumber(vincita)}\n\n⏳ 𝐋𝐚 𝐩𝐚𝐫𝐭𝐢𝐭𝐚 𝐬𝐭𝐚 𝐢𝐧𝐢𝐳𝐢𝐚𝐧𝐝𝐨...`
+  
+  await conn.sendMessage(m.chat, {
+    text: `✅ *SCHEDINA GIOCATA!*\n\n🏟️ ${casa.nome} vs ${trasf.nome}\n🎯 Segno: *${segno}*\n📈 Quota: *${quota}*\n💰 Potenziale Vincita: *${formatNumber(vincita)}€*\n\n_La partita sta per iniziare..._`
   }, { quoted: m })
 
-  const messaggioLive = await conn.sendMessage(m.chat, { text: `╭━━━━━━━📡━━━━━━━╮\n✦ 𝐂𝐑𝐎𝐍𝐀𝐂𝐀 𝐋𝐈𝐕𝐄 ✦\n╰━━━━━━━📡━━━━━━━╯\n\n${casa.nome} 0 - 0 ${trasf.nome}` }, { quoted: m })
-  const key = messaggioLive.key
-  let testoLive = `╭━━━━━━━📡━━━━━━━╮\n✦ 𝐂𝐑𝐎𝐍𝐀𝐂𝐀 𝐋𝐈𝐕𝐄 ✦\n╰━━━━━━━📡━━━━━━━╯\n\n${casa.nome} 0 - 0 ${trasf.nome}\n`
-
-  for (const evento of cronaca) {
-    await new Promise(r => setTimeout(r, 1800))
-    testoLive += `\n${evento.minuto} ${evento.testo}`
-    await modificaMessaggio(conn, m.chat, key, testoLive, [who])
+  const live = await conn.sendMessage(m.chat, { text: `🏟️ *LIVE:* ${casa.nome} 0 - 0 ${trasf.nome}` })
+  
+  // Simulazione cronaca veloce
+  for (let i = 0; i < 4; i++) {
+    await new Promise(r => setTimeout(r, 2000))
+    let progressoGolCasa = Math.floor((risultato.golCasa / 4) * (i + 1))
+    let progressoGolTrasf = Math.floor((risultato.golTrasf / 4) * (i + 1))
+    await modificaMessaggio(conn, m.chat, live.key, `🏟️ *LIVE:* ${casa.nome} ${progressoGolCasa} - ${progressoGolTrasf} ${trasf.nome}\n\n⌚ Minuto: ${20 * (i+1)}' - Azione pericolosa!`)
   }
 
-  await new Promise(r => setTimeout(r, 2200))
-  if (vittoriaCasa) {
+  await new Promise(r => setTimeout(r, 2000))
+  const vinto = segno === risultato.esitoFinale
+
+  if (vinto) {
     user.euro += vincita
-    await modificaMessaggio(conn, m.chat, key, `╭━━━━━━━🏁━━━━━━━╮\n✦ 𝐅𝐈𝐒𝐂𝐇𝐈𝐎 𝐅𝐈𝐍𝐀𝐋𝐄 ✦\n╰━━━━━━━🏁━━━━━━━╯\n\n${casa.nome} ${risultato.golCasa} - ${risultato.golTrasf} ${trasf.nome}\n\n✅ 𝐒𝐜𝐡𝐞𝐝𝐢𝐧𝐚 𝐯𝐢𝐧𝐭𝐚\n\n💸 +${formatNumber(vincita)}\n🏦 𝐒𝐚𝐥𝐝𝐨: ${formatNumber(user.euro)}`, [who])
+    await modificaMessaggio(conn, m.chat, live.key, `🏁 *FINALE:* ${casa.nome} ${risultato.golCasa} - ${risultato.golTrasf} ${trasf.nome}\n\n🏆 *HAI VINTO!*\n💰 Incasso: +${formatNumber(vincita)}€\n🏦 Saldo: ${formatNumber(user.euro)}€`)
   } else {
-    await modificaMessaggio(conn, m.chat, key, `╭━━━━━━━🏁━━━━━━━╮\n✦ 𝐅𝐈𝐒𝐂𝐇𝐈𝐎 𝐅𝐈𝐍𝐀𝐋𝐄 ✦\n╰━━━━━━━🏁━━━━━━━╯\n\n${casa.nome} ${risultato.golCasa} - ${risultato.golTrasf} ${trasf.nome}\n\n❌ 𝐒𝐜𝐡𝐞𝐝𝐢𝐧𝐚 𝐩𝐞𝐫𝐬𝐚\n\n📉 -${formatNumber(puntata)}\n💼 𝐒𝐚𝐥𝐝𝐨: ${formatNumber(user.euro)}`, [who])
+    await modificaMessaggio(conn, m.chat, live.key, `🏁 *FINALE:* ${casa.nome} ${risultato.golCasa} - ${risultato.golTrasf} ${trasf.nome}\n\n❌ *HAI PERSO!*\n📉 Perdita: -${formatNumber(puntata)}€\n💼 Saldo: ${formatNumber(user.euro)}€`)
   }
-  if (immaginePartita && fs.existsSync(immaginePartita)) fs.unlinkSync(immaginePartita)
 }
 
-handler.help = ['schedina']
+handler.help = ['schedina [cifra] [1/X/2]']
 handler.tags = ['game']
 handler.command = /^(schedina|bet)$/i
 handler.group = true
