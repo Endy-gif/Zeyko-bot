@@ -15,29 +15,12 @@ const DEFAULT_AVATAR_URL = 'https://i.ibb.co/BKHtdBNp/default-avatar-profile-ico
 
 let defaultAvatarBuffer = null;
 let puppeteer = null;
-let browser = null;
 let isPuppeteerAvailable = false;
 
 const initPuppeteer = async () => {
     try {
         puppeteer = await import('puppeteer');
         isPuppeteerAvailable = true;
-        return true;
-    } catch (error) {
-        isPuppeteerAvailable = false;
-        return false;
-    }
-};
-
-const initBrowser = async () => {
-    if (!puppeteer || !isPuppeteerAvailable) return false;
-    try {
-        if (!browser) {
-            browser = await puppeteer.launch({
-                headless: 'new',
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-            });
-        }
         return true;
     } catch (error) {
         isPuppeteerAvailable = false;
@@ -126,7 +109,7 @@ const WelcomeCard = ({ backgroundUrl, pfpUrl, isGoodbye, username, groupName }) 
                     React.createElement('h1', { className: 'title' }, isGoodbye ? 'ADDIO!' : 'BENVENUTO!'),
                     React.createElement('h2', { className: 'username' }, username),
                     React.createElement('p', { className: 'group-name' }, groupName),
-                    React.createElement('div', { className: 'footer' }, '✦ ⋆ ✧ ⭒ 𝓿𝓪𝓻𝓮𝓫𝓸𝓽 ⭒ ✧ ⋆ ✦')
+                    React.createElement('div', { className: 'footer' }, '✦ ⋆ ✧ ⭒ BLD-BLOOD⭒ ✧ ⋆ ✦')
                 )
             )
         )
@@ -142,15 +125,27 @@ async function createImage(username, groupName, profilePicBuffer, isGoodbye, gro
     const element = React.createElement(WelcomeCard, { backgroundUrl, pfpUrl, isGoodbye, username, groupName });
     const htmlContent = `<!DOCTYPE html>${ReactDOMServer.renderToStaticMarkup(element)}`;
 
-    if (isPuppeteerAvailable && (await initBrowser())) {
-        const page = await browser.newPage();
-        await page.setViewport({ width: 1600, height: 900 });
-        await page.setContent(htmlContent);
-        const screenshot = await page.screenshot({ type: 'jpeg', quality: 90 });
-        await page.close();
-        return screenshot;
+    // Gestione istanza temporanea Puppeteer
+    if (isPuppeteerAvailable) {
+        let browser = null;
+        try {
+            browser = await puppeteer.launch({
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            });
+            const page = await browser.newPage();
+            await page.setViewport({ width: 1600, height: 900 });
+            await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+            const screenshot = await page.screenshot({ type: 'jpeg', quality: 90 });
+            return screenshot;
+        } catch (error) {
+            console.error("Puppeteer locale fallito, provo fallback:", error.message);
+        } finally {
+            if (browser) await browser.close(); // Chiusura garantita dell'istanza
+        }
     }
 
+    // Fallback su Browserless API
     const res = await axios.post(`https://production-sfo.browserless.io/screenshot?token=${global.APIKeys?.browserless}`, {
         html: htmlContent,
         viewport: { width: 1600, height: 900 }
@@ -158,6 +153,7 @@ async function createImage(username, groupName, profilePicBuffer, isGoodbye, gro
     return Buffer.from(res.data);
 }
 
+// Inizializzazione
 initPuppeteer().then(preloadDefaultAvatar);
 
 export async function before(m, { conn, groupMetadata }) {
@@ -166,18 +162,17 @@ export async function before(m, { conn, groupMetadata }) {
     const chat = global.db?.data?.chats?.[m.chat];
     if (!chat) return true;
 
-    // CODICI: 27/31 = ENTRATA | 28/32 = USCITA
     const isAdd = [27, 31].includes(m.messageStubType);
     const isRemove = [28, 32].includes(m.messageStubType);
 
-    if (!isAdd && !isRemove) return true; // Ignora tutto il resto (promozioni, nomi, etc)
+    if (!isAdd && !isRemove) return true;
     if (isAdd && !chat.welcome) return true;
     if (isRemove && !chat.goodbye) return true;
 
     const who = m.messageStubParameters?.[0];
     const pushNameFromStub = m.messageStubParameters?.[1];
     if (!who || !who.includes('@')) return true;
-    
+
     const jid = conn.decodeJid(who);
     const cleanUserId = jid.split('@')[0];
 
