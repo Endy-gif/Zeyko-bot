@@ -35,22 +35,22 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     let downloadUrl = null;
     const isAudio = command === 'playaud';
 
-    // NUOVA LISTA API - AGGIORNATA ORA
+    // LISTA API AGGIORNATA AL 22 APRILE 2026
     const apiList = [
-        `https://api.guruapi.tech/ytdl/video?url=${url}`, // Prova GuruAPI (molto potente)
-        `https://api.pts-ofc.xyz/api/download/ytmp${isAudio ? '3' : '4'}?url=${url}`,
-        `https://widipe.com/download/ytmp${isAudio ? '3' : '4'}?url=${url}`,
-        `https://api.fgmods.xyz/api/downloader/ytmp${isAudio ? '3' : '4'}?url=${url}&apikey=fg-852` 
+        `https://api.boxiwan.my.id/api/download/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.skizo.tech/api/y2mate?url=${url}`,
+        `https://api.tesshu.my.id/api/download/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.botcahx.eu.org/api/dowloader/ytmp${isAudio ? '3' : '4'}?url=${url}&apikey=btch-932`
     ];
 
     for (let api of apiList) {
         try {
-            console.log(`[BLOOD] Test server: ${api}`);
+            console.log(`[BLOOD] Tentativo su: ${api}`);
             let res = await fetch(api);
             let json = await res.json();
             
-            // Gestione specifica per GuruAPI e Widipe
-            downloadUrl = json.result?.url || json.result?.download_url || json.result?.dl_url || json.dl_url || json.url;
+            // Estrazione flessibile del link
+            downloadUrl = json.data?.url || json.result?.url || json.result?.dl || json.url || json.result?.link;
             
             if (downloadUrl && typeof downloadUrl === 'string' && downloadUrl.startsWith('http')) break;
         } catch (e) {
@@ -65,7 +65,12 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     const tmpDir = os.tmpdir();
     const filePath = path.join(tmpDir, `blood_${Date.now()}.${isAudio ? 'mp3' : 'mp4'}`);
 
-    const response = await fetch(downloadUrl);
+    // Download con headers per simulare un browser (evita blocchi 403)
+    const response = await fetch(downloadUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
+    });
+    
+    if (!response.ok) throw new Error('ERRORE_DOWNLOAD');
     const buffer = await response.buffer();
     fs.writeFileSync(filePath, buffer);
 
@@ -87,9 +92,9 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     await conn.sendMessage(m.chat, { react: { text: "✅", key: m.key } });
 
   } catch (e) {
-    console.error('ERRORE FINALE:', e);
+    console.error('DEBUG:', e);
     await conn.sendMessage(m.chat, { react: { text: "❌", key: m.key } });
-    m.reply(`🚀 *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐄𝐑𝐑𝐎𝐑:*\n\nNessun server disponibile. Probabile restrizione IP di YouTube. Riprova più tardi.`);
+    m.reply(`🚀 *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐄𝐑𝐑𝐎𝐑:*\n\nNessun server disponibile. Prova a scrivere il titolo esatto della canzone o usa un link diretto.`);
   }
 };
 
