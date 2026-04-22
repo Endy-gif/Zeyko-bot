@@ -1,5 +1,4 @@
 import yts from 'yt-search';
-import fg from 'api-dylux';
 import fetch from 'node-fetch';
 import { exec } from 'child_process';
 import fs from 'fs';
@@ -41,75 +40,56 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     let downloadUrl = null;
     const isAudio = command === 'playaud';
 
-    // Tentativo 1: API Dylux
-    try {
-        let res = isAudio ? await fg.yta(url) : await fg.ytv(url);
-        if (res && res.dl_url) downloadUrl = res.dl_url;
-    } catch (err) {
-        console.error('Errore API Dylux:', err);
-    }
+    // NUOVO SISTEMA DI DOWNLOAD (API 2026)
+    const apis = [
+        `https://api.siputzx.my.id/api/d/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.vreden.my.id/api/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.zenkey.my.id/api/download/ytmp${isAudio ? '3' : '4'}?url=${url}&apikey=zenkey`
+    ];
 
-    // Tentativo 2: API Fallback (Vreden) se il primo fallisce
-    if (!downloadUrl) {
+    for (let api of apis) {
         try {
-            let api = isAudio ? 'ytmp3' : 'ytmp4';
-            let res = await fetch(`https://api.vreden.my.id/api/${api}?url=${url}`);
+            let res = await fetch(api);
             let json = await res.json();
-            downloadUrl = json.result?.download?.url || json.result?.url || json.result?.download_url;
-        } catch (err) {
-            console.error('Errore API Fallback:', err);
+            downloadUrl = json.data?.dl || json.data?.url || json.result?.download?.url || json.result?.url || json.result?.downloadUrl;
+            if (downloadUrl) break; 
+        } catch (e) {
+            continue;
         }
     }
 
-    // Controllo finale prima di procedere con il fetch (Riga 54 fix)
-    if (!downloadUrl || typeof downloadUrl !== 'string') {
-        throw new Error('Impossibile ottenere un URL di download valido.');
-    }
+    if (!downloadUrl) throw new Error('Nessun server di download disponibile.');
 
     const tmpDir = os.tmpdir();
-    const inputPath = path.join(tmpDir, `input_${Date.now()}`);
-    const outputPath = path.join(tmpDir, `output_${Date.now()}.${isAudio ? 'mp3' : 'mp4'}`);
+    const fileName = `blood_${Date.now()}.${isAudio ? 'mp3' : 'mp4'}`;
+    const filePath = path.join(tmpDir, fileName);
 
-    // Download del file
     const response = await fetch(downloadUrl);
-    if (!response.ok) throw new Error(`Errore HTTP: ${response.statusText}`);
-    
-    const arrayBuffer = await response.arrayBuffer();
-    fs.writeFileSync(inputPath, Buffer.from(arrayBuffer));
+    if (!response.ok) throw new Error('Errore nel download dal server.');
+    const buffer = await response.buffer();
+    fs.writeFileSync(filePath, buffer);
 
     if (isAudio) {
-        // Conversione Audio tramite FFmpeg
-        await new Promise((resolve, reject) => {
-            exec(`ffmpeg -i "${inputPath}" -vn -ar 44100 -ac 2 -b:a 128k "${outputPath}"`, (err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
-
         await conn.sendMessage(m.chat, {
-            audio: fs.readFileSync(outputPath),
+            audio: fs.readFileSync(filePath),
             mimetype: 'audio/mpeg',
             fileName: `${vid.title}.mp3`,
             ptt: false
         }, { quoted: m });
     } else {
-        // Invio Video
         await conn.sendMessage(m.chat, {
-            video: fs.readFileSync(inputPath),
+            video: fs.readFileSync(filePath),
             mimetype: 'video/mp4',
             caption: `✅ *𝐒𝐜𝐚𝐫𝐢𝐜𝐚𝐭𝐨 𝐝𝐚 𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓*`,
         }, { quoted: m });
     }
 
-    // Pulizia file temporanei
-    if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-    if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     await conn.sendMessage(m.chat, { react: { text: "✅", key: m.key } });
 
   } catch (e) {
-    console.error('ERRORE FINALE:', e);
-    await conn.sendMessage(m.chat, { react: { text: "❌", key: m.key } });
-    m.reply('🚀 *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐄𝐑𝐑𝐎𝐑:* File non disponibile o server offline. Riprova più tardi.');
+    console.error('ERRORE:', e);
+    m.reply('🚀 *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐄𝐑𝐑𝐎𝐑:* Prova a riutilizzare il comando, il server era sovraccarico.');
   }
 };
 
