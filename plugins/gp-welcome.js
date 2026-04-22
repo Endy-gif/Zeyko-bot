@@ -125,7 +125,6 @@ async function createImage(username, groupName, profilePicBuffer, isGoodbye, gro
     const element = React.createElement(WelcomeCard, { backgroundUrl, pfpUrl, isGoodbye, username, groupName });
     const htmlContent = `<!DOCTYPE html>${ReactDOMServer.renderToStaticMarkup(element)}`;
 
-    // Gestione istanza temporanea Puppeteer
     if (isPuppeteerAvailable) {
         let browser = null;
         try {
@@ -137,15 +136,14 @@ async function createImage(username, groupName, profilePicBuffer, isGoodbye, gro
             await page.setViewport({ width: 1600, height: 900 });
             await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
             const screenshot = await page.screenshot({ type: 'jpeg', quality: 90 });
+            await browser.close(); 
             return screenshot;
         } catch (error) {
-            console.error("Puppeteer locale fallito, provo fallback:", error.message);
-        } finally {
-            if (browser) await browser.close(); // Chiusura garantita dell'istanza
+            if (browser) await browser.close();
+            console.error("Puppeteer fallito:", error.message);
         }
     }
 
-    // Fallback su Browserless API
     const res = await axios.post(`https://production-sfo.browserless.io/screenshot?token=${global.APIKeys?.browserless}`, {
         html: htmlContent,
         viewport: { width: 1600, height: 900 }
@@ -153,7 +151,6 @@ async function createImage(username, groupName, profilePicBuffer, isGoodbye, gro
     return Buffer.from(res.data);
 }
 
-// Inizializzazione
 initPuppeteer().then(preloadDefaultAvatar);
 
 export async function before(m, { conn, groupMetadata }) {
@@ -185,20 +182,23 @@ export async function before(m, { conn, groupMetadata }) {
     const memberCount = groupMetadata?.participants?.length || 0;
     const displayName = (username.startsWith('Utente ')) ? cleanUserId : username;
 
-    const caption = isRemove ?
-        `*\`Addio\`* @${cleanUserId} 👋\n┊ _Ha abbandonato il gruppo_\n╰► *\`Membri\`* ${memberCount}` :
-        `*\`Benvenuto/a\`* @${cleanUserId} *✧*\n┊ *\`In\`* *${groupName}*\n*╰►* *\`Membri:\`* ${memberCount}`;
+    let caption = '';
+    if (isAdd) {
+        caption = chat.sWelcome ? chat.sWelcome.replace(/@user/g, `@${cleanUserId}`).replace(/@group/g, groupName) : `*\`Benvenuto/a\`* @${cleanUserId} *✧*\n┊ *\`In\`* *${groupName}*\n*╰►* *\`Membri:\`* ${memberCount}`;
+    } else {
+        caption = chat.sGoodbye ? chat.sGoodbye.replace(/@user/g, `@${cleanUserId}`).replace(/@group/g, groupName) : `*\`Addio\`* @${cleanUserId} 👋\n┊ _Ha abbandonato il gruppo_\n╰► *\`Membri\`* ${memberCount}`;
+    }
 
     try {
         const image = await createImage(displayName, groupName, profilePic, isRemove, m.chat, conn);
         await conn.sendMessage(m.chat, {
             image,
             caption,
-            mentions: [jid],
+            mentions: caption.includes(`@${cleanUserId}`) ? [jid] : [],
             contextInfo: { ...(global.fake?.contextInfo || {}) }
         });
     } catch (error) {
-        await conn.sendMessage(m.chat, { text: caption, mentions: [jid] });
+        await conn.sendMessage(m.chat, { text: caption, mentions: caption.includes(`@${cleanUserId}`) ? [jid] : [] });
     }
     return true;
 }
