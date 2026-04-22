@@ -15,12 +15,8 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     const url = vid.url;
 
     if (command === 'play') {
-        let infoMsg = `┏━━━━━━━━━━━━━━━━━━━━┓\n`;
-        infoMsg += `   🎧  *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐏𝐋𝐀𝐘𝐄𝐑* 🎧\n`;
-        infoMsg += `┗━━━━━━━━━━━━━━━━━━━━┛\n\n`;
-        infoMsg += `◈ 📌 *𝗧𝗶𝘁𝗼𝗹𝗼:* ${vid.title}\n`;
-        infoMsg += `◈ ⏱️ *𝗗𝘂𝗿𝗮𝘁𝗮:* ${vid.timestamp}\n\n`;
-        infoMsg += `*𝗦𝗲𝗹𝗲𝘇𝗶𝗼𝗻𝗮 𝗶𝗹 𝗳𝗼𝗿𝗺𝗮𝘁𝗼:*`;
+        let infoMsg = `┏━━━━━━━━━━━━━━━━━━━━┓\n   🎧  *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐏𝐋𝐀𝐘𝐄𝐑* 🎧\n┗━━━━━━━━━━━━━━━━━━━━┛\n\n`;
+        infoMsg += `◈ 📌 *𝗧𝗶𝘁𝗼𝗹𝗼:* ${vid.title}\n◈ ⏱️ *𝗗𝘂𝗿𝗮𝘁𝗮:* ${vid.timestamp}\n\n*𝗦𝗲𝗹𝗲𝘇𝗶𝗼𝗻𝗮 𝗶𝗹 𝗳𝗼𝗿𝗺𝗮𝘁𝗼:*`;
 
         return await conn.sendMessage(m.chat, {
             image: { url: vid.thumbnail },
@@ -37,45 +33,44 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     await conn.sendMessage(m.chat, { react: { text: "🩸", key: m.key } });
 
     let downloadUrl = null;
-    let success = false;
     const isAudio = command === 'playaud';
 
-    // Lista API aggiornate 2026 (Rotazione Automatica)
+    // LISTA SERVER DI EMERGENZA (Aggiornata 2026)
     const apiList = [
-        `https://api.alyachan.dev/api/ytmp${isAudio ? '3' : '4'}?url=${url}`,
-        `https://api.maher-zubair.tech/download/ytmp${isAudio ? '3' : '4'}?url=${url}`,
-        `https://api.siputzx.my.id/api/d/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.vreden.my.id/api/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.aguztin.xyz/api/v1/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.shizuka.site/y2mate?url=${url}`,
+        `https://api.darki.me/api/download/ytmp${isAudio ? '3' : '4'}?url=${url}`,
         `https://api.lolhuman.xyz/api/ytmp${isAudio ? '3' : '4'}?apikey=GataDios&url=${url}`
     ];
 
     for (let api of apiList) {
         try {
-            console.log(`[BLOOD BOT] Provando server: ${api}`);
-            let res = await fetch(api);
+            console.log(`[BLOOD] Tentativo: ${api}`);
+            let res = await fetch(api, { timeout: 15000 }); // 15 secondi di timeout
             let json = await res.json();
             
-            // Estrazione link universale
-            downloadUrl = json.data?.url || json.result?.url || json.result?.download_url || json.result?.dl || json.result?.link || json.url;
+            // Log per capire cosa risponde il server fallito
+            if (!json.status && !json.result) console.log('[BLOOD] Server risponde con errore:', json);
+
+            downloadUrl = json.data?.url || json.result?.url || json.result?.downloadUrl || json.result?.dl || json.result?.link || json.url || json.result;
             
-            if (downloadUrl && downloadUrl.startsWith('http')) {
-                success = true;
-                break;
-            }
+            // Verifichiamo che il link sia un vero URL e non un messaggio di errore
+            if (downloadUrl && typeof downloadUrl === 'string' && downloadUrl.startsWith('http')) break;
         } catch (e) {
-            console.error(`[BLOOD BOT] Server fallito, passo al successivo...`);
+            console.error('[BLOOD] Errore server, salto...');
         }
     }
 
-    if (!success || !downloadUrl) {
-        throw new Error('Tutti i server di download sono attualmente offline.');
+    if (!downloadUrl || typeof downloadUrl !== 'string') {
+        throw new Error('SERVER_OFFLINE');
     }
 
     const tmpDir = os.tmpdir();
     const filePath = path.join(tmpDir, `blood_${Date.now()}.${isAudio ? 'mp3' : 'mp4'}`);
 
-    // Download effettivo del file
     const response = await fetch(downloadUrl);
-    if (!response.ok) throw new Error('Il server ha rifiutato il download.');
+    if (!response.ok) throw new Error('DOWNLOAD_FAILED');
     
     const buffer = await response.buffer();
     fs.writeFileSync(filePath, buffer);
@@ -84,25 +79,23 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         await conn.sendMessage(m.chat, {
             audio: fs.readFileSync(filePath),
             mimetype: 'audio/mpeg',
-            fileName: `${vid.title}.mp3`,
-            ptt: false
+            fileName: `${vid.title}.mp3`
         }, { quoted: m });
     } else {
         await conn.sendMessage(m.chat, {
             video: fs.readFileSync(filePath),
             mimetype: 'video/mp4',
-            caption: `✅ *𝐒𝐜𝐚𝐫𝐢𝐜𝐚𝐭𝐨 𝐝𝐚 𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓*`,
+            caption: `✅ *𝐒𝐜𝐚𝐫𝐢𝐜𝐚𝐭𝐨 𝐝𝐚 𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓*`
         }, { quoted: m });
     }
 
-    // Pulizia
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     await conn.sendMessage(m.chat, { react: { text: "✅", key: m.key } });
 
   } catch (e) {
-    console.error('ERRORE CRITICO:', e);
+    console.error('ERRORE FINALE:', e);
     await conn.sendMessage(m.chat, { react: { text: "❌", key: m.key } });
-    m.reply(`🚀 *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐄𝐑𝐑𝐎𝐑:*\n\nI server di YouTube sono sovraccarichi o il file è troppo grande. Riprova tra poco.`);
+    m.reply(`🚀 *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐄𝐑𝐑𝐎𝐑:*\n\nAl momento YouTube sta bloccando i server di download. Prova con una canzone diversa o riprova tra 5 minuti.`);
   }
 };
 
