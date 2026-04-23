@@ -15,25 +15,27 @@ const moduleCache = new NodeCache({ stdTTL: 300 });
 
 global.sam = ['393701330693',]
 global.owner = [
-  ['393701330693', 'blood', true],
-  ['212778494602', 'deadly', true],
-  ['212779981664', 'gaia', true],
-  ['393508727141', 'matteo', true], 
-  ['xxxxxxxxxxxxx']
+  ['393501989497', 'endy', true],
+  ['212693877842', 'medalis', true],
+  ['393520940427', 'nane', true],
+  ['393206032199', 'punisher', true], 
+  ['447449205584', 'endy44', true],
+  ['212614898801', 'bot', true],
+  ['447935218835', 'exorcism', true],
 ]
 global.mods = ['xxxxxxxxxxx', 'xxxxxxxxxxx', 'xxxxxxxxxxx']
 global.prems = ['xxxxxxxxxxx', 'xxxxxxxxxxx', 'xxxxxxxxxxx']
 
 /*⭑⭒━━━✦❘༻🩸 INFO BOT 🕊️༺❘✦━━━⭒⭑*/
 
-global.nomepack = 'BLD-BLOOD'
-global.nomebot = 'BLD-BLOOD'
-global.wm = 'BLD-BLOOD'
-global.autore = 'BLOOD'
-global.dev = 'BLOOD'
-global.testobot = `BLD-BLOOD`
+global.nomepack = 'ZEYNO'
+global.nomebot = 'ZEYNO'
+global.wm = 'ZEYNO'
+global.autore = 'ENDY'
+global.dev = 'ENDY'
+global.testobot = `ZEYNO`
 global.versione = pkg.version
-global.errore = '*ERRORE INATTESO*, UTILIZZA IL COMANDO .segnala (errore) per contattare lo sviluppatore. contatto diretto:+39 370 133 0693'
+global.errore = '*ERRORE INATTESO*, UTILIZZA IL COMANDO .segnala (errore) per contattare lo sviluppatore. contatto diretto:+39 350 198 9497'
 
 /*⭑⭒━━━✦❘༻🌐 LINK 🌐༺❘✦━━━⭒⭑*/
 
